@@ -48,9 +48,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	  http.Error(w, "Can't parse the request body", http.StatusBadRequest)
 	  return
 	}
-  
-	// TODO: Validate user data (optional)
-  // loop on the user object and check if the fields are empty
+  //
+  // validate input
   isValid, errors := user.validate();
   if !isValid {
     response := map[string]interface{}{
