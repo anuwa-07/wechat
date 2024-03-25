@@ -1,30 +1,34 @@
 package main
 import (
 	"fmt"
-	"time"
+	"os"
+	"context"
 
-	"net/http"
-	"github.com/gorilla/mux"
-	"github.com/anuwa-07/wechat/internal/handlers"
+	// internal packages
+	"github.com/anuwa-07/wechat/pkg/sql"
 )
 
-func HelloHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello, World!")
+func main() {
+	// make a context for the application.
+	ctx := context.Background();
+
+	//
+	dbConfig := sql.DBConfig{
+		Username: "root",
+		Password: "12345678",
+		Host: "localhost",
+		Port: "3306",
+		Database: "wechat",
+		MaxOpenConnections: 10,
+		MaxIdleConnections: 5,
+	}
+	dbConn, err := sql.ConnInit(dbConfig);
+	if err != nil {
+		fmt.Println("[SQL] Conncetion Initilization Failed!", err);
+		os.Exit(1);
+	}
+	fmt.Println("[SQL] Connection Initilized Successfully!");
+
+	// TODO: call on wechat server and run the application...
 }
 
-// main function and run the server
-func main() {
-	r := mux.NewRouter();
-	r.HandleFunc("/employee/create", handlers.CreateUser).Methods("POST");
-	http.Handle("/", r);
-	//
-	// configure the server and run it...
-	server := &http.Server{
-		Addr:    ":8080",
-		ReadTimeout: 15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-	}
-	//
-	fmt.Println("Server is running on port 8080...")
-	server.ListenAndServe();
-}
