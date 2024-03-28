@@ -6,6 +6,7 @@ import (
 
 	// internal packages
 	"github.com/anuwa-07/wechat/pkg/sql"
+	"github.com/anuwa-07/wechat/internal/wechat"
 )
 
 func main() {
@@ -30,5 +31,13 @@ func main() {
 	fmt.Println("[SQL] Connection Initilized Successfully!");
 
 	// TODO: call on wechat server and run the application...
+	wechatServer, err := wechat.NewServer(ctx, "127.0.0.1:5000", dbConn);
+	if err != nil {
+		fmt.Println("Failed to create the wechat server: ", err);
+		os.Exit(1);
+	}
+	//
+	wechatServer.Start()
+	fmt.Println("Wechat server created successfully!");
 }
 

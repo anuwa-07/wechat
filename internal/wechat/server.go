@@ -3,10 +3,20 @@ import (
 	"fmt"
 	"context"
 
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/anuwa-07/wechat/internal/wechat/service"
-	"github.com/anuwa-07/wechat/pkg/sql"
+	
 )
+
+type EmployeeInfo struct {
+	FullName string `json:"fullname"`
+	Email string `json:"email"`
+	Phone string `json:"phone"`
+	City string `json:"city"`
+}
 
 type Server struct {
 	listenAddr string
@@ -15,10 +25,11 @@ type Server struct {
 
 func (s *Server) Start() error {
 	app := fiber.New();
-
 	// TODO: Set middleware for the application...
 	// TODO: Set routes for the application...
 
+	s.routes(app);
+	//
 	// Start the server...
 	if err := app.Listen(s.listenAddr); err != nil {
 		return fmt.Errorf("failed to start the server: %w", err)
@@ -39,15 +50,45 @@ func (s *Server) routes(ap *fiber.App) {
 
 func (s *Server) getEmployeeByEmail(c *fiber.Ctx) error {
 	// TODO: Implement the logic here...
-	return nil;
-
+	// send a test employee data...
+	return c.JSON(fiber.Map{
+		"email": "anuruddha@gmail.com",
+		"first_name": "Anuruddha",
+		"last_name": "Bandara",
+		"age": 26,
+		"address": "Colombo, Sri Lanka",
+	});
 	// Here after validating the user data. Then we need to call on the related method from the service layer.
 	// s.employeeService.GetEmployeeByEmail(email); - something like this...
 }
 
 func (s *Server) createEmployee(c *fiber.Ctx) error {
-	// TODO: Implement the logic here...
-	return nil;
+	// get the `fullname`, `email`, `phone`, `city` from the request body...
+	emp := new(EmployeeInfo);
+	if err := c.BodyParser(emp); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Bad Request",
+			"message": "Invalid Request Body",
+		});
+	}
+	// TODO: Check is there better way to do this ...
+	detail := map[string]interface{}{
+		"fullname": emp.FullName,
+		"email": emp.Email,
+		"phone": emp.Phone,
+		"city": emp.City,
+	};
+	err := s.employeeService.CreateEmployee(detail);
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Internal Server Error",
+			"message": "Failed to create the employee",
+		});
+	}
+	//
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"message": "Employee created successfully!",
+	});
 }
 
 func (s *Server) updateEmployee(c *fiber.Ctx) error {
@@ -61,13 +102,13 @@ func (s *Server) deleteEmployee(c *fiber.Ctx) error {
 }
 
 func (s *Server) healthCheck(c *fiber.Ctx) error {
-	return c.SendString("OK");
+	return c.SendString("Application is Running Bro... :)");
 }
 //
 // NewServer creates a new server instance
-func NewServer(ctx context.Context, listenAddr string, db *sql.DBConfig) (*Server, error) {
+func NewServer(ctx context.Context, listenAddr string, db *sql.DB) (*Server, error) {
 	return &Server{
 		listenAddr: listenAddr,
-		employeeService: service.EmployeeService(db), // TODO: Update the service.EmployeeService function to accept the db connection and other scenarios.
+		employeeService: service.NewEmployeeService(db), // TODO: Update the service.EmployeeService function to accept the db connection and other scenarios.
 	}, nil
 }
